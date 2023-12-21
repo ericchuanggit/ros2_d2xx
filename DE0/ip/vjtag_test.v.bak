@@ -1,0 +1,109 @@
+module vjtag_test (
+    input p_reset,
+    input m_clock,
+    input [9:0] SW,
+    output [6:0] HEX0,
+    output [6:0] HEX1,
+    output [6:0] HEX2,
+    output [6:0] HEX3,
+    output [9:0] LEDG
+);
+
+    // Internal signals and registers
+    wire [6:0] oSEG_0, oSEG_1, oSEG_2, oSEG_3;
+    reg [15:0] seg;
+    wire recv_init, recv, send_init, send_ready;
+    wire [7:0] recv_data;
+    reg [7:0] ram[32768];
+    reg [7:0] ram_dout;
+    reg [14:0] recv_adrs, send_adrs;
+    reg [7:0] recv_sum, send_sum, send_data_last;
+    reg vjtag_send;
+
+    // Instantiation of components
+    seg7_ctrl seg7_0 (.iDIG(seg[15:12]), .oSEG(oSEG_0));
+    seg7_ctrl seg7_1 (.iDIG(seg[11: 8]), .oSEG(oSEG_1));
+    seg7_ctrl seg7_2 (.iDIG(seg[ 7: 4]), .oSEG(oSEG_2));
+    seg7_ctrl seg7_3 (.iDIG(seg[ 3: 0]), .oSEG(oSEG_3));
+    // Segment outputs
+    assign HEX3 = oSEG_0;
+    assign HEX2 = oSEG_1;
+    assign HEX1 = oSEG_2;
+    assign HEX0 = oSEG_3;
+	 
+    vjtag_uart vjtag (
+	     .p_reset    (p_reset),    // in, Global reset
+		  .m_clock    (m_clock),    // in, Main clock
+        .recv_init  (recv_init),  // out, Signal initialization for receiving
+        .recv       (recv),       // out, Signal for receiving data
+        .recv_data  (recv_data),  // out8, Data being received
+        .send_init  (send_init),  // out, Signal initialization for sending
+        .send_ready (send_ready), // out, Signal indicating ready to send
+		  .send       (vjtag_send), // in, Signal to start sending
+		  .send_data  (ram_dout)    // in8, Data to send
+ 
+    );
+
+
+
+    // Control logic
+    always @(posedge m_clock or posedge p_reset) begin
+        if (p_reset) begin
+            // You might want to add reset values for the registers here
+				seg <= 0;
+        end else begin
+            if(SW[0]) begin
+                seg <= {send_adrs[7:0], recv_adrs[7:0]};
+            end else begin
+                seg <= {(send_sum-send_data_last), recv_sum};
+            end
+        end
+    end
+
+    always @(posedge m_clock or posedge p_reset) begin
+        if (p_reset) begin
+            recv_adrs <= 15'd0;
+            recv_sum <= 8'd0;
+        end else begin
+		      recv_adrs <= recv_adrs;
+            recv_sum <= recv_sum;
+		      if (recv_init) begin
+                recv_adrs <= 15'd0;
+                recv_sum <= 8'd0;
+            end else if (recv) begin
+                ram[recv_adrs] <= recv_data;
+                recv_adrs <= recv_adrs + 1;
+                recv_sum <= recv_sum + recv_data;
+            end
+		  end
+    end
+
+    always @(posedge m_clock or posedge p_reset) begin
+        if (p_reset) begin
+            send_adrs <= 15'd0;
+            send_sum <= 8'd0;
+            send_data_last <= 8'd0;
+        end else begin
+            send_adrs <= send_adrs;
+            send_sum <= send_sum;
+            send_data_last <= send_data_last;
+		      if (send_init) begin
+                send_adrs <= 15'd0;
+                send_sum <= 8'd0;
+                send_data_last <= 8'd0;
+            end else if (send_ready) begin
+                ram_dout <= ram[send_adrs];
+                send_adrs <= send_adrs + 1;
+                vjtag_send <= 1'b1;
+            end else if (vjtag_send) begin
+            // vjtag.send(ram_dout);
+                send_sum <= send_sum + ram_dout;
+                send_data_last <= ram_dout;
+                vjtag_send <= 1'b0;
+            end
+        end
+    end
+
+    assign LEDG = {send_adrs[10:1], recv_adrs[10:1]};
+
+endmodule

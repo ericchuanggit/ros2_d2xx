@@ -1,0 +1,4 @@
+
+	// Self-define constants for receive and send commands
+	`define COMMAND_RECV  8'h41;
+	`define COMMAND_SEND  8'h42;
