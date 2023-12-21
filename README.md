@@ -37,10 +37,10 @@ ros2 run ros2_d2xx pub_sub
 ```
 
 ## Result
-* Success Connection
+* Success Connection<br>
 ![Success](result/success.jpg)
 
-* Failure Connection
+* Failure Connection<br>
 ![Failure](result/Failure.jpg)
 
 
