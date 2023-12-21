@@ -238,16 +238,35 @@ public:
     }
 
 private:
-    void topic_callback(const std_msgs::msg::String::SharedPtr msg) {
-        RCLCPP_INFO(this->get_logger(), "Received message:'%s' complete !", msg->data.c_str());
-    }
     FT_HANDLE ftHandle;
+    void topic_callback(const std_msgs::msg::String::SharedPtr msg) {
+        
+        // init. USB 
+
+        FT_STATUS ftStatus;
+        ftStatus = FT_OpenEx((PVOID)"USB-Blaster", FT_OPEN_BY_DESCRIPTION, &ftHandle);
+        if (ftStatus != FT_OK) {
+            RCLCPP_ERROR(this->get_logger(), "Failed connection");
+            return;
+        }
+        else
+        {
+            RCLCPP_INFO(this->get_logger(), "Received checksum Data");
+            const int size = 32768; // data size range
+            uint8* recv_data = new uint8[size];
+            BlasterRecv(ftHandle, recv_data, size);
+            delete[] recv_data;
+            RCLCPP_INFO(this->get_logger(), "Received '%s' :Transmission completed!", msg->data.c_str());
+        }
+
+    }
+
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscriber_;
 };
 
 class MyPublisher : public rclcpp::Node {
 public:
-    MyPublisher() : Node("ROS2_Node"), ftHandle(nullptr) {
+    MyPublisher() : Node("ROS2_publisher"), ftHandle(nullptr) {
         // init. publisher
         publisher_ = this->create_publisher<std_msgs::msg::String>("usb_data", 10);
 
@@ -256,20 +275,26 @@ public:
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         timer_callback();
+
         //sending D2XX
         sendUSBData();
-        if (ftHandle != nullptr) {
-            FT_Close(ftHandle);
-        }
-        recvUSBData();
         if (ftHandle != nullptr) {
             FT_Close(ftHandle);
         }
     }
 
 private:
+    FT_HANDLE ftHandle;
+
+    void timer_callback() {
+        auto message = std_msgs::msg::String();
+        message.data = "USB-Blaster";
+        RCLCPP_INFO(this->get_logger(), "Connecting :'%s'", message.data.c_str());
+        publisher_->publish(message);
+    }
+    
     void sendUSBData() {
-        // USB init
+        // send USB checksum Data
         FT_STATUS ftStatus;
         ftStatus = FT_OpenEx((PVOID)"USB-Blaster", FT_OPEN_BY_DESCRIPTION, &ftHandle);
         if (ftStatus != FT_OK) {
@@ -278,7 +303,7 @@ private:
         }
         else
         {
-            RCLCPP_INFO(this->get_logger(), "Send checksum Data");
+            RCLCPP_INFO(this->get_logger(), "Successfully connected : Send checksum Data");
         }
         const int size = 32768; //data size range
         srand((uint32)time(NULL));
@@ -289,30 +314,6 @@ private:
         BlasterSend(ftHandle, send_data, size);
         delete[] send_data;
     }
-    void recvUSBData() {
-        // init. USB 
-        FT_STATUS ftStatus;
-        ftStatus = FT_OpenEx((PVOID)"USB-Blaster", FT_OPEN_BY_DESCRIPTION, &ftHandle);
-        if (ftStatus != FT_OK) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to open USB port");
-            return;
-        }
-        else
-        {
-            RCLCPP_INFO(this->get_logger(), "Received checksum Data");
-        }
-        const int size = 32768; // data size range
-        uint8* recv_data = new uint8[size];
-        BlasterRecv(ftHandle, recv_data, size);
-        delete[] recv_data;
-    }
-    void timer_callback() {
-        auto message = std_msgs::msg::String();
-        message.data = "usb-blaster";
-        RCLCPP_INFO(this->get_logger(), "Connecting:'%s'\n", message.data.c_str());
-        publisher_->publish(message);
-    }
-    FT_HANDLE ftHandle;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
 };
