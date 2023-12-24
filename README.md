@@ -12,8 +12,8 @@
 * [FTDI D2XX Driver](https://ftdichip.com/drivers/d2xx-drivers/)
 ### Prerequisites 
 * Quastus II 13.0 sp 1(64-bit)
-* Vistual Studio 2022
-*  ROS2 humble
+* Vistual Studio 2022 
+* ROS2 humble
 * FTDI D2XX Library
 
 ### Create Project with VS2022/cmd.exe
@@ -55,8 +55,9 @@ ros2 run ros2_d2xx pub_sub
 
 
 ## Authors 
-
+* **Dr. Shih-An Li**
 * **Eric Chuang** 
+ 
 
 
 
