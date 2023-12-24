@@ -1,9 +1,11 @@
 # ros2_d2xx
-> �N FTDI USB�PAltera �s����USB-blaster �ϥ� ROS2 �sĶ�ð�������USB�O�_���Q���q
+> 將 FTDI USB與Altera 連接的USB-blaster 使用 ROS2 編譯並執行驗證USB是否順利接通
 
 ## Getting Started 
-* �ݭn�w���w�˾��ROS2 Humble ���� [ros2-humble install Windows(source)](https://docs.ros.org/en/humble/Installation/Alternatives/Windows-Development-Setup.html)
-* �w���N�JAltera DE0 Broad  : DE0_top.sof ���b /DE0/output_files ��
+燒錄好DE0 Broad的硬體電路
+
+* 需要預先安裝整個ROS2 Humble 環境 [ros2-humble install Windows(source)](https://docs.ros.org/en/humble/Installation/Alternatives/Windows-Development-Setup.html)
+* 預先燒入Altera DE0 Broad  : DE0_top.sof 文件在 /DE0/output_files 中
 ### Environment
 * Windows10
 * Altera DE0 Board
