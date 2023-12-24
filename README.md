@@ -33,14 +33,14 @@ call install\local_setup.bat                            # set created package en
 colcon build --packages-select ros2_d2xx --merge-install # build ros2 package with colcon build
 ```
 * Colcon Build<br>
-![Success](result/colcon_build.jpg)
+![Success](result/colcon_build.png)
 
 ## Burn the DE0_top.sof file into the DE0 board
 ```bash
 D:\dev\ros2_ws\src\ros2_d2xx\DE0\output_files>quartus_pgm -c usb-blaster -m jtag -o "p;DE0_top.sof@1"
 ```
 * Burn in FPGA
-![Burnin](result/burnin.png)
+![Burnin](result/Burnin.png)
 ## Usage ros2_d2xx package 
 ```bash
 ros2 run ros2_d2xx pub_sub
